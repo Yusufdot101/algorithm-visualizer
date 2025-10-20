@@ -1,7 +1,6 @@
 import type { moveType } from "../App";
 
 export const getSelectionSortMoves = (arrayNumbers: number[]): moveType[] => {
-	console.log(arrayNumbers);
 	const moves: moveType[] = [];
 	for (let i = 0; i < arrayNumbers.length - 1; i++) {
 		let minNumberIdx = i;

@@ -1,3 +1,4 @@
+import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { getBubbleSortMoves } from "./utilities/bubbleSort";
 import { getSelectionSortMoves } from "./utilities/selectionSort";
@@ -10,8 +11,10 @@ export type moveType = {
 
 const App = () => {
 	const getSortingAlgorithmMoves = (arrayNumbers: number[]) => {
-		const selectionSortMoves = getSelectionSortMoves([...arrayNumbers]);
-		return selectionSortMoves;
+		const func = algorithmToFunction.get(sortingAlgorthim);
+		if (!func) return [];
+		const moves = func([...arrayNumbers]);
+		return moves;
 	};
 	const getRandomNumber = (minNumber: number, maxNumber: number): number => {
 		const num = Math.random() * maxNumber - 1 + minNumber;
@@ -43,6 +46,27 @@ const App = () => {
 		clearInterval(intervalID);
 	};
 
+	const handleNumberOfItemsChange = (
+		e: React.ChangeEvent<HTMLInputElement>,
+	) => {
+		const value = +e.target.value;
+		setNumberOfItems(value);
+	};
+
+	const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = +e.target.value;
+		if (value < 0) return;
+		setSpeed(value);
+	};
+
+	const handleSortingAlgorithmChange = (
+		e: React.ChangeEvent<HTMLSelectElement>,
+	) => {
+		if (isSorting) return;
+		const algorithm = e.target.selectedOptions[0].value;
+		setSortingAlgorithm(algorithm);
+	};
+
 	const handleSort = () => {
 		setIsSorting((prev) => !prev);
 	};
@@ -72,11 +96,14 @@ const App = () => {
 				setSwappedIndicies([-1, -1]);
 				setComparedIndicies([move.firstIdx, move.secondIdx]);
 			}
-		}, 50);
+		}, speed);
 		setIntervalID(id);
 	};
 
 	const [numberOfItems, setNumberOfItems] = useState<number>(50);
+	const [sortingAlgorthim, setSortingAlgorithm] =
+		useState<string>("bubbleSort");
+	const [speed, setSpeed] = useState<number>(500);
 	const [numbersArray, setNumbersArray] = useState<number[]>(() =>
 		getArrayOfRandomNumbers(numberOfItems, 1, 10),
 	);
@@ -84,6 +111,14 @@ const App = () => {
 	const [comparedIndicies, setComparedIndicies] = useState<number[]>([-1, -1]);
 
 	const [isSorting, setIsSorting] = useState<boolean>(false);
+
+	useEffect(() => {
+		clearInterval(intervalID);
+		play();
+	}, [speed]);
+	useEffect(() => {
+		handleNewArray();
+	}, [numberOfItems]);
 
 	useEffect(() => {
 		const [firstIdx, secondIdx] = [swappedIndicies[0], swappedIndicies[1]];
@@ -106,28 +141,72 @@ const App = () => {
 		setMoves(moves);
 	}, []);
 
+	const algorithmToFunction = new Map<
+		string,
+		(arrayNumbers: number[]) => moveType[]
+	>();
+	algorithmToFunction.set("bubbleSort", getBubbleSortMoves);
+	algorithmToFunction.set("selectionSort", getSelectionSortMoves);
+	useEffect(() => {
+		handleNewArray();
+	}, [sortingAlgorthim]);
+
 	return (
-		<div className="min-h-screen flex flex-col gap-y-5 py-5 bg-slate-300 justify-between items-center">
-			<div className="flex justify-center gap-x-2 w-[90vw]">
-				<button
-					onClick={handleNewArray}
-					className="bg-red-500 w-1/2 py-2 px-5 mx-auto rounded-lg text-white cursor-pointer"
+		<div className="min-h-screen flex flex-col gap-y-5 py-2 bg-slate-300 justify-start items-center">
+			<div className="flex flex-col justify-center gap-x-2 w-[90vw] gap-y-2">
+				<select
+					name="sortingAlgorthim"
+					value={sortingAlgorthim}
+					className="w-full flex gap-x-2 items-center bg-slate-800 rounded-lg p-2 text-white"
+					onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+						handleSortingAlgorithmChange(e)
+					}
 				>
-					New Number
-				</button>
-				<button
-					onClick={handleSort}
-					className="bg-green-500 w-1/2 py-2 px-5 mx-auto rounded-lg text-white cursor-pointer"
-				>
-					{isSorting ? "Stop Sorting" : "Start Sorting"}
-				</button>
+					<option value="bubbleSort">Bubble Sort</option>
+					<option value="selectionSort">Selection Sort</option>
+				</select>
+				<section className="w-full flex gap-x-2 items-center">
+					<input
+						type="number"
+						min="0"
+						value={numberOfItems}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							handleNumberOfItemsChange(e)
+						}
+						className="bg-slate-800 text-white p-2 rounded-lg w-20"
+					/>
+					<input
+						type="range"
+						min="0"
+						max="5000"
+						value={speed}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							handleSpeedChange(e)
+						}
+						className="w-full"
+					/>
+				</section>
+				<section className="flex gap-x-2">
+					<button
+						onClick={handleNewArray}
+						className="bg-red-500 w-1/2 py-2 px-5 mx-auto rounded-lg text-white cursor-pointer"
+					>
+						New
+					</button>
+					<button
+						onClick={handleSort}
+						className="bg-green-500 w-1/2 py-2 px-5 mx-auto rounded-lg text-white cursor-pointer"
+					>
+						{isSorting ? "Stop" : "Start"}
+					</button>
+				</section>
 			</div>
-			<div className="flex  justify-center items-end w-full min-h-">
+			<div className="flex  justify-center items-end w-full h-fit overflow-hidden min-h-[80vh]">
 				{numbersArray.map((num, idx) => (
 					<div
 						key={`${num}-${idx}`}
 						style={{
-							height: `${num * 9}vh`,
+							height: `${num * 8}vh`,
 							width: `${98 / numberOfItems}vw`,
 							background: `${comparedIndicies.includes(idx) ? "orange" : idx === swappedIndicies[0] ? "red" : idx === swappedIndicies[1] ? "green" : ""}`,
 						}}

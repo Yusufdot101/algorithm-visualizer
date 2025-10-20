@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { getBubbleSortMoves } from "./utilities/bubbleSort";
+import { getSelectionSortMoves } from "./utilities/selectionSort";
 
 export type moveType = {
-	fromIdx: number;
-	toIdx: number;
+	moveType: string;
+	firstIdx: number;
+	secondIdx: number;
 };
 
 const App = () => {
+	const getSortingAlgorithmMoves = (arrayNumbers: number[]) => {
+		const selectionSortMoves = getSelectionSortMoves([...arrayNumbers]);
+		return selectionSortMoves;
+	};
 	const getRandomNumber = (minNumber: number, maxNumber: number): number => {
 		const num = Math.random() * maxNumber - 1 + minNumber;
 		return Math.round(num * 10) / 10; // round to the nearest tenth
@@ -27,12 +33,11 @@ const App = () => {
 	const handleNewArray = () => {
 		setNumbersArray(() => {
 			const newArray = getArrayOfRandomNumbers(numberOfItems, 1, 10);
-			const bubbleSortMoves = getBubbleSortMoves([...newArray]);
-			setMoves(bubbleSortMoves);
+			setMoves(getSortingAlgorithmMoves(newArray));
 			return newArray;
 		});
-		setFromIdx(-1);
-		setToIdx(-1);
+		setSwappedIndicies([-1, -1]);
+		setComparedIndicies([-1, -1]);
 		setIsSorting(false);
 		currentMoveIndex.current = 0;
 		clearInterval(intervalID);
@@ -44,9 +49,9 @@ const App = () => {
 
 	const [moves, setMoves] = useState<moveType[]>([]);
 
-	const swapTwoNumbers = (fromIdx: number, toIdx: number) => {
-		setFromIdx(fromIdx);
-		setToIdx(toIdx);
+	const swapTwoNumbers = (swappedIndicies: number[]) => {
+		setComparedIndicies([-1, -1]);
+		setSwappedIndicies(swappedIndicies);
 	};
 	const [intervalID, setIntervalID] = useState<number>(0);
 	const currentMoveIndex = useRef(0);
@@ -61,8 +66,13 @@ const App = () => {
 			}
 			const move = moves[currentMoveIndex.current];
 			currentMoveIndex.current++;
-			swapTwoNumbers(move.fromIdx, move.toIdx);
-		}, 100);
+			if (move.moveType === "swap") {
+				swapTwoNumbers([move.firstIdx, move.secondIdx]);
+			} else {
+				setSwappedIndicies([-1, -1]);
+				setComparedIndicies([move.firstIdx, move.secondIdx]);
+			}
+		}, 50);
 		setIntervalID(id);
 	};
 
@@ -70,26 +80,30 @@ const App = () => {
 	const [numbersArray, setNumbersArray] = useState<number[]>(() =>
 		getArrayOfRandomNumbers(numberOfItems, 1, 10),
 	);
-	const [fromIdx, setFromIdx] = useState<number>(-1);
-	const [toIdx, setToIdx] = useState<number>(-1);
+	const [swappedIndicies, setSwappedIndicies] = useState<number[]>([-1, -1]);
+	const [comparedIndicies, setComparedIndicies] = useState<number[]>([-1, -1]);
 
 	const [isSorting, setIsSorting] = useState<boolean>(false);
 
 	useEffect(() => {
+		const [firstIdx, secondIdx] = [swappedIndicies[0], swappedIndicies[1]];
 		setNumbersArray((prev) => {
 			const updated = [...prev];
-			[updated[fromIdx], updated[toIdx]] = [updated[toIdx], updated[fromIdx]];
+			[updated[firstIdx], updated[secondIdx]] = [
+				updated[secondIdx],
+				updated[firstIdx],
+			];
 			return updated;
 		});
-	}, [fromIdx, toIdx]);
+	}, [swappedIndicies]);
 
 	useEffect(() => {
 		play();
 	}, [isSorting]);
 
 	useEffect(() => {
-		const bubbleSortMoves = getBubbleSortMoves([...numbersArray]);
-		setMoves(bubbleSortMoves);
+		const moves = getSortingAlgorithmMoves([...numbersArray]);
+		setMoves(moves);
 	}, []);
 
 	return (
@@ -114,13 +128,11 @@ const App = () => {
 						key={`${num}-${idx}`}
 						style={{
 							height: `${num * 9}vh`,
-							width: `${95 / numberOfItems}vw`,
-							background: `${idx === fromIdx ? "red" : idx === toIdx ? "green" : ""}`,
+							width: `${98 / numberOfItems}vw`,
+							background: `${comparedIndicies.includes(idx) ? "orange" : idx === swappedIndicies[0] ? "red" : idx === swappedIndicies[1] ? "green" : ""}`,
 						}}
 						className="bg-slate-900 text-white text-[8px] flex justify-center pt-2 border-[1px] border-black border-collapse"
-					>
-						{num}
-					</div>
+					></div>
 				))}
 			</div>
 		</div>

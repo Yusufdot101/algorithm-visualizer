@@ -1,6 +1,7 @@
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { getBubbleSortMoves } from "./utilities/bubbleSort";
+import { getInsertionSortMoves } from "./utilities/insertionSort";
 import { getSelectionSortMoves } from "./utilities/selectionSort";
 
 export type moveType = {
@@ -36,7 +37,7 @@ const App = () => {
 	const handleNewArray = () => {
 		setNumbersArray(() => {
 			const newArray = getArrayOfRandomNumbers(numberOfItems, 1, 10);
-			setMoves(getSortingAlgorithmMoves(newArray));
+			setMoves(getSortingAlgorithmMoves([...newArray]));
 			return newArray;
 		});
 		setSwappedIndicies([-1, -1]);
@@ -49,6 +50,7 @@ const App = () => {
 	const handleNumberOfItemsChange = (
 		e: React.ChangeEvent<HTMLInputElement>,
 	) => {
+		if (isSorting) return;
 		const value = +e.target.value;
 		setNumberOfItems(value);
 	};
@@ -147,6 +149,7 @@ const App = () => {
 	>();
 	algorithmToFunction.set("bubbleSort", getBubbleSortMoves);
 	algorithmToFunction.set("selectionSort", getSelectionSortMoves);
+	algorithmToFunction.set("insertionSort", getInsertionSortMoves);
 	useEffect(() => {
 		handleNewArray();
 	}, [sortingAlgorthim]);
@@ -164,6 +167,7 @@ const App = () => {
 				>
 					<option value="bubbleSort">Bubble Sort</option>
 					<option value="selectionSort">Selection Sort</option>
+					<option value="insertionSort">Insertion Sort</option>
 				</select>
 				<section className="w-full flex gap-x-2 items-center">
 					<input

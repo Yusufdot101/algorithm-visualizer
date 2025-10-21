@@ -26,6 +26,7 @@ const App = () => {
 		minNumber: number,
 		maxNumber: number,
 	): number[] => {
+		// return [3, 2, 1]
 		const generatedArray: number[] = [];
 		for (let i = 0; i < arrayLength; i++) {
 			const randomNumber = getRandomNumber(minNumber, maxNumber);
@@ -35,6 +36,7 @@ const App = () => {
 	};
 
 	const handleNewArray = () => {
+		if (numberOfItems === 0) return;
 		setNumbersArray(() => {
 			const newArray = getArrayOfRandomNumbers(numberOfItems, 1, 10);
 			setMoves(getSortingAlgorithmMoves([...newArray]));
@@ -88,6 +90,9 @@ const App = () => {
 		}
 		const id = setInterval(() => {
 			if (currentMoveIndex.current >= moves.length) {
+				setComparedIndicies([-1, -1]);
+				setSwappedIndicies([-1, -1]);
+				setIsSorting(false);
 				return;
 			}
 			const move = moves[currentMoveIndex.current];
@@ -102,7 +107,7 @@ const App = () => {
 		setIntervalID(id);
 	};
 
-	const [numberOfItems, setNumberOfItems] = useState<number>(50);
+	const [numberOfItems, setNumberOfItems] = useState<number>(5);
 	const [sortingAlgorthim, setSortingAlgorithm] =
 		useState<string>("bubbleSort");
 	const [speed, setSpeed] = useState<number>(500);
